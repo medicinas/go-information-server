@@ -28,12 +28,6 @@ func main() {
 		appName,
 		viper.GetString("profile"),
 		viper.GetString("configBranch"))
-	//initializeBoltClient()
-	service.StartWebServer(viper.GetString("server_port"))
+	service := service.WebServerService{}
+	service.Run(viper.GetString("server_port"))
 }
-
-/*func initializeBoltClient() {
-	service.DBClient = &dbclient.BoltClient{}
-	service.DBClient.OpenBoltDb()
-	service.DBClient.Seed()
-}*/
