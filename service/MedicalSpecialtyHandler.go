@@ -1,55 +1,68 @@
 package service
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gopkg.in/mgo.v2/bson"
+	"medicinas/information-server/config"
 	"medicinas/information-server/helpers"
 	"medicinas/information-server/models"
-	"strconv"
-	"time"
 )
 
 type medicalSpecialtyHandler struct {
-	client *mongo.Client
 }
 
 func (handler *medicalSpecialtyHandler) GetMedicalSpecialties(c *gin.Context) {
-	var specialities []models.MedicalSpecialty
-	collection := handler.client.Database("basic_information").Collection("medical_specialties")
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	cursor, err := collection.Find(ctx, bson.M{})
+	var medicalSpecialties []models.MedicalSpecialty
+	mongo, ok := c.Keys["mongo"].(*config.MongoDB)
+	if !ok {
+		c.JSON(500, gin.H{"message": "can't reach db", "body": nil})
+	}
+	session := mongo.Session.Clone()
+	defer session.Close()
+	err := session.DB(mongo.Database).C("medical_specialties").Find(bson.M{}).All(&medicalSpecialties)
 	if err != nil {
 		c.JSON(500, err)
-		return
 	}
-	for cursor.Next(ctx) {
-		var specialty models.MedicalSpecialty
-		err = cursor.Decode(&specialty)
-		if err != nil {
-			c.JSON(500, err)
-		}
-		specialities = append(specialities, specialty)
-	}
-	c.JSON(200, specialities)
+	c.JSON(200, medicalSpecialties)
 }
 
 func (handler *medicalSpecialtyHandler) GetMedicalSpecialty(c *gin.Context) {
+	var medicalSpecialty models.MedicalSpecialty
+	medicalSpecialtyId := c.Param("id")
+	mongo, ok := c.Keys["mongo"].(*config.MongoDB)
+	if !ok {
+		c.JSON(500, gin.H{"message": "can't reach db", "body": nil})
+		return
+	}
+	session := mongo.Session.Clone()
+	defer session.Close()
+	err := session.DB(mongo.Database).C("medical_specialties").FindId(bson.ObjectIdHex(medicalSpecialtyId)).One(&medicalSpecialty)
+	if err != nil {
+		c.JSON(500, gin.H{"message": "Can't create a medical specialty", "body": nil})
+		return
+	}
+	c.JSON(200, medicalSpecialty)
 
 }
 
 func (handler *medicalSpecialtyHandler) CreateMedicalSpecialty(c *gin.Context) {
 	var medicalSpecialty models.MedicalSpecialty
+	mongo, ok := c.Keys["mongo"].(*config.MongoDB)
+	if !ok {
+		c.JSON(400, gin.H{"message": "can't reach db", "body": nil})
+	}
 	err := c.Bind(&medicalSpecialty)
 	if err != nil {
 		c.JSON(400, helpers.NewError("problem decoding body"))
 		return
 	}
-	collection := handler.client.Database("basic_information").Collection("medical_specialties")
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	result, _ := collection.InsertOne(ctx, medicalSpecialty)
-	c.JSON(200, result)
+	session := mongo.Session.Clone()
+	err = session.DB(mongo.Database).C("medical_specialties").Insert(&medicalSpecialty)
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
+	c.JSON(201, medicalSpecialty)
 }
 
 func (handler *medicalSpecialtyHandler) UpdateMedicalSpecialty(c *gin.Context) {
@@ -57,14 +70,18 @@ func (handler *medicalSpecialtyHandler) UpdateMedicalSpecialty(c *gin.Context) {
 }
 
 func (handler *medicalSpecialtyHandler) DeleteMedicalSpecialty(c *gin.Context) {
-
-}
-
-func (p *medicalSpecialtyHandler) getId(c *gin.Context) (int32, error) {
-	idStr := c.Params.ByName("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return 0, err
+	medicalSpecialtyId := c.Param("id")
+	mongo, ok := c.Keys["mongo"].(*config.MongoDB)
+	if !ok {
+		c.JSON(500, gin.H{"message": "can't reach db", "body": nil})
+		return
 	}
-	return int32(id), nil
+	session := mongo.Session.Clone()
+	defer session.Close()
+	err := session.DB(mongo.Database).C("medical_specialties").RemoveId(bson.ObjectIdHex(medicalSpecialtyId))
+	if err != nil {
+		c.JSON(500, gin.H{"message": "Can't create a medical specialty", "body": nil})
+		return
+	}
+	c.JSON(204, gin.H{})
 }

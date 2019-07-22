@@ -1,12 +1,8 @@
 package service
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
+	"medicinas/information-server/config"
 )
 
 type WebServerService struct {
@@ -14,14 +10,16 @@ type WebServerService struct {
 
 func (s *WebServerService) Run(port string) {
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	clientOptions := options.Client().ApplyURI(viper.GetString("mongo_db"))
-	client, _ := mongo.Connect(ctx, clientOptions)
+	mongoDB := config.MongoDB{}
+	mongoDB.SetDefault()
 
-	medicalSpecialityResource := medicalSpecialtyHandler{client: client}
+	medicalSpecialityResource := medicalSpecialtyHandler{}
 
-	r := gin.Default()
-	apiv1 := r.Group("/api/v1")
+	router := gin.Default()
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+	router.Use(MiddleDB(&mongoDB))
+	apiv1 := router.Group("/api/v1")
 	{
 		apiv1.GET("/medical-specialty", medicalSpecialityResource.GetMedicalSpecialties)
 		apiv1.GET("/medical-specialty/:id", medicalSpecialityResource.GetMedicalSpecialty)
@@ -30,8 +28,19 @@ func (s *WebServerService) Run(port string) {
 		apiv1.DELETE("/medical-specialty/:id", medicalSpecialityResource.DeleteMedicalSpecialty)
 	}
 
-	r.StaticFile("/", "./public/index.html")
-	r.Static("/public/", "./public/")
+	router.StaticFile("/", "./public/index.html")
+	router.Static("/public/", "./public/")
+	_ = router.Run(":" + port)
+}
 
-	r.Run(":" + port)
+func MiddleDB(mongo *config.MongoDB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		err := mongo.SetSession()
+		if err != nil {
+			c.Abort()
+		} else {
+			c.Set("mongo", mongo)
+			c.Next()
+		}
+	}
 }
