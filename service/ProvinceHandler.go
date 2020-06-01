@@ -3,9 +3,9 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2/bson"
-	"medicinas/information-server/config"
-	"medicinas/information-server/helpers"
-	"medicinas/information-server/models"
+	"information-server/config"
+	"information-server/helpers"
+	"information-server/models"
 )
 
 type provinceHandler struct {

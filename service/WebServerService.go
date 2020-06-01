@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"medicinas/information-server/config"
+	"information-server/config"
 )
 
 type WebServerService struct {

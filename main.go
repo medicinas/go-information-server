@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/spf13/viper"
-	"medicinas/information-server/config"
-	"medicinas/information-server/service"
+	"information-server/config"
+	"information-server/service"
 )
 
 var appName = "infomationserver"
