@@ -18,6 +18,7 @@ func (s *WebServerService) Run(port string) {
 	provinceResource := provinceHandler{}
 	cityResource := cityHandler{}
 	anatomicRegionResource := anatomicRegionHandler{}
+	countryResource := countryResource{}
 
 	router := gin.Default()
 	router.Use(gin.Logger())
@@ -31,17 +32,23 @@ func (s *WebServerService) Run(port string) {
 		apiv1.PUT("/medical-specialty/", medicalSpecialityResource.UpdateMedicalSpecialty)
 		apiv1.DELETE("/medical-specialty/:id", medicalSpecialityResource.DeleteMedicalSpecialty)
 
-		apiv1.GET("/cities", cityResource.GetCities)
-		apiv1.GET("/cities/:id", cityResource.GetCity)
-		apiv1.POST("/cities", cityResource.CreateCity)
-		apiv1.PUT("/cities", cityResource.UpdateCity)
-		apiv1.DELETE("/cities/:id", cityResource.DeleteCity)
+		apiv1.GET("/countries", countryResource.GetCountries)
+		apiv1.GET("/countries/:id", countryResource.GetCountry)
+		apiv1.POST("/countries", countryResource.CreateCountry)
+		apiv1.PUT("/countries", countryResource.UpdateCountry)
+		apiv1.DELETE("/countries/:id", countryResource.DeleteCountry)
 
 		apiv1.GET("/provinces", provinceResource.GetProvinces)
 		apiv1.GET("/provinces/:id", provinceResource.GetProvince)
 		apiv1.POST("/provinces", provinceResource.CreateProvince)
 		apiv1.PUT("/provinces", provinceResource.UpdateProvince)
 		apiv1.DELETE("/provinces/:id", provinceResource.DeleteProvince)
+
+		apiv1.GET("/cities", cityResource.GetCities)
+		apiv1.GET("/cities/:id", cityResource.GetCity)
+		apiv1.POST("/cities", cityResource.CreateCity)
+		apiv1.PUT("/cities", cityResource.UpdateCity)
+		apiv1.DELETE("/cities/:id", cityResource.DeleteCity)
 
 		apiv1.GET("/medicines", medicineResource.GetMedicines)
 		apiv1.GET("/medicines/:id", medicineResource.GetMedicine)
